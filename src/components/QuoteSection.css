@@ -1,0 +1,115 @@
+.quote-section {
+  padding: 72px 24px 96px;
+  background: linear-gradient(180deg, var(--bg-main, #f8fafc) 0%, rgba(0, 0, 0, 0.02) 100%);
+}
+
+.quote-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.quote-title {
+  font-family: var(--heading, inherit);
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 800;
+  color: var(--brand-dark, #0f172a);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.quote-title span {
+  color: var(--brand-cyan-dark, #0891b2);
+}
+
+.quote-subtitle {
+  text-align: center;
+  color: var(--text-secondary, #64748b);
+  margin-bottom: 28px;
+  font-size: 1rem;
+}
+
+.quote-banner {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm, 8px);
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.quote-banner--ok {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: var(--brand-green-dark, #047857);
+}
+
+.quote-banner--err {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #b91c1c;
+}
+
+.quote-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.quote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.quote-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quote-field span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary, #64748b);
+}
+
+.quote-field input,
+.quote-field select,
+.quote-field textarea {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--input-border, var(--border-glass-hover));
+  background: var(--input-bg, var(--surface-1));
+  color: var(--text-primary, #0f172a);
+  font-size: 0.95rem;
+  font-family: var(--sans, inherit);
+}
+
+.quote-field textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.quote-field--full {
+  grid-column: 1 / -1;
+}
+
+.quote-submit {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 14px 28px;
+  border: none;
+  border-radius: var(--radius-sm, 8px);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand-cyan, #06b6d4), var(--brand-green, #22c55e));
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.08));
+}
+
+.quote-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}

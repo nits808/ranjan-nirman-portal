@@ -1,0 +1,251 @@
+/* ─── Premium Light Hero Section ────────────────────────── */
+.hero-container {
+  position: relative;
+  min-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+  padding-bottom: 120px;
+}
+
+/* Light frosted background over image */
+.hero-container::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: 
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.75) 0%, var(--bg-main) 100%),
+    url('https://images.unsplash.com/photo-1541888086425-d81bb19240f5?q=80&w=2000&auto=format&fit=crop')
+    center / cover no-repeat;
+  z-index: -2;
+}
+
+/* Floating Blurred Blobs (Light Palette) */
+.blob {
+  position: absolute;
+  filter: blur(80px);
+  z-index: -1;
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: floatOrb 25s infinite ease-in-out alternate;
+}
+.blob-1 {
+  top: 10%; left: 10%;
+  width: 400px; height: 400px;
+  background: var(--brand-cyan);
+}
+.blob-2 {
+  bottom: 20%; right: 10%;
+  width: 500px; height: 500px;
+  background: var(--brand-green);
+  animation-delay: -10s;
+}
+
+@keyframes floatOrb {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(60px, 30px) scale(1.05); }
+  100% { transform: translate(-30px, 60px) scale(0.95); }
+}
+
+/* Hero Content Box */
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  padding: 0 24px;
+}
+
+/* Refined Premium Badge (Light Mode) */
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-1);
+  backdrop-filter: var(--surface-blur);
+  border: 1px solid var(--border-glass);
+  border-radius: 999px;
+  padding: 8px 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+}
+.pulse-dot {
+  width: 8px; height: 8px;
+  background: var(--brand-cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 12px var(--brand-cyan);
+  animation: pulse-glow 2s infinite;
+}
+
+/* Kinetic Header */
+.hero-title {
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -2px;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+}
+
+.gradient-text {
+  background: linear-gradient(110deg, var(--brand-dark) 10%, var(--brand-cyan) 40%, var(--brand-green) 80%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  background-size: 200% auto;
+  animation: shimmer 5s linear infinite;
+}
+
+/* Subtitle */
+.hero-subtitle {
+  font-size: clamp(1.1rem, 2vw, 1.25rem);
+  color: var(--text-secondary);
+  max-width: 680px;
+  margin: 0 auto 40px;
+  line-height: 1.7;
+  font-weight: 500;
+}
+
+/* Primary Button with Glass Hover */
+.primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--brand-cyan), var(--brand-green));
+  color: var(--text-inverse);
+  padding: 18px 40px;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: 0.5px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.primary-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transition: 0.5s;
+}
+
+.primary-btn.glass-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px rgba(77, 184, 204, 0.4);
+  background: linear-gradient(135deg, var(--brand-cyan-dark), var(--brand-green-dark));
+}
+.primary-btn.glass-hover:hover::after {
+  left: 100%;
+}
+
+.hero-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+}
+
+.secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 36px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.02rem;
+  border-radius: var(--radius-md);
+  color: var(--brand-dark);
+  background: var(--surface-1);
+  border: 2px solid var(--border-glass-hover);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.secondary-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--brand-cyan);
+  box-shadow: var(--shadow-md);
+}
+
+/* ─── Floating Stats Glass Card (Light) ──────────────────── */
+.hero-stats-wrapper {
+  position: absolute;
+  bottom: -40px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0 24px;
+  z-index: 10;
+}
+
+.hero-stats.glass-card {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1100px;
+  background: var(--surface-1);
+  backdrop-filter: var(--surface-blur);
+  -webkit-backdrop-filter: var(--surface-blur);
+  border: 1px solid var(--border-glass-hover); /* Slightly stronger border to stand out on light */
+  border-radius: var(--radius-lg);
+  padding: 32px 48px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255,255,255,0.8) inset;
+}
+
+.hero-stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 24px;
+  border-right: 1px solid var(--border-glass-hover);
+  flex: 1;
+}
+.hero-stat-box:last-child {
+  border-right: none;
+}
+
+.hero-stat-number {
+  font-family: var(--heading);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 900;
+  color: var(--brand-dark);
+  line-height: 1;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.hero-stat-label {
+  font-size: 0.85rem;
+  color: var(--brand-cyan-dark);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 860px) {
+  .hero-stats.glass-card {
+    flex-wrap: wrap;
+    gap: 32px 0;
+    padding: 24px;
+    border-radius: var(--radius-md);
+  }
+  .hero-stat-box {
+    flex: 1 1 50%;
+    border-right: none;
+  }
+  .hero-stat-box:nth-child(odd) {
+    border-right: 1px solid var(--border-glass-hover);
+  }
+}

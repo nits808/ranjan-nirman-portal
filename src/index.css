@@ -1,0 +1,183 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ─── Premium Light Design Tokens ────────────────────────── */
+:root {
+  /* Logo Derived Brand Colors */
+  --brand-cyan: #4db8cc;       /* From left of the 'R' */
+  --brand-cyan-dark: #008ba3;
+  --brand-green: #a4d233;      /* From right of the 'R' */
+  --brand-green-dark: #6fa000;
+  --brand-yellow: #d4b248;     /* From Logo Text */
+  --brand-gold: #b08d27;
+  
+  /* Light Modern Backgrounds */
+  --bg-main: #f8fafc;        /* Off-white canvas */
+  --bg-darker: #f1f5f9;      /* Slightly darker areas */
+  --brand-dark: #1e293b;     /* Kept for headers/navbars */
+  --brand-darker: #0f172a;
+  
+  /* Glassmorphism Surfaces (Light Context) */
+  --surface-0: rgba(255, 255, 255, 0.4);
+  --surface-1: rgba(255, 255, 255, 0.7);
+  --surface-2: rgba(255, 255, 255, 0.9);
+  --surface-dark: rgba(15, 23, 42, 0.85); /* For Dark Navbar/Cards */
+  --surface-blur: blur(24px);
+  
+  /* Borders */
+  --border-glass: rgba(0, 0, 0, 0.06);
+  --border-glass-dark: rgba(255, 255, 255, 0.08); /* For dark elements */
+  --border-glass-hover: rgba(0, 0, 0, 0.12);
+  --border-accent: rgba(77, 184, 204, 0.35); /* Cyan accent */
+  
+  /* Typography Colors */
+  --text-primary: #0f172a;     /* Slate 900 */
+  --text-secondary: #475569;   /* Slate 600 */
+  --text-muted: #94a3b8;       /* Slate 400 */
+  --text-inverse: #ffffff;     /* For text on dark backgrounds */
+  
+  /* Shadows & Glows */
+  --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 0 30px rgba(77, 184, 204, 0.15);
+  
+  /* Layout Specs */
+  --radius-sm: 10px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --sans: 'Inter', system-ui, sans-serif;
+  --heading: 'Outfit', system-ui, sans-serif;
+
+  --input-bg: #ffffff;
+  --input-border: var(--border-glass-hover);
+}
+
+/* ─── Dark theme (toggle via ThemeProvider) ───────────────── */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-main: #0f172a;
+  --bg-darker: #020617;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --brand-dark: #e2e8f0;
+  --surface-0: rgba(30, 41, 59, 0.55);
+  --surface-1: rgba(30, 41, 59, 0.88);
+  --surface-2: rgba(51, 65, 85, 0.95);
+  --border-glass: rgba(255, 255, 255, 0.06);
+  --border-glass-hover: rgba(255, 255, 255, 0.12);
+  --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --input-bg: #1e293b;
+  --input-border: rgba(255, 255, 255, 0.14);
+}
+
+/* ─── Base Reset ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bg-main);
+}
+
+body {
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ─── Dynamic Background Mesh (Light) ────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%; left: -50%; width: 200%; height: 200%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(77, 184, 204, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(164, 210, 51, 0.05) 0%, transparent 35%),
+    radial-gradient(circle at 20% 80%, rgba(212, 178, 72, 0.04) 0%, transparent 40%);
+  animation: rotateMesh 45s linear infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes rotateMesh {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* ─── Typography ─────────────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family: var(--heading);
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+p {
+  color: var(--text-secondary);
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-darker); }
+::-webkit-scrollbar-thumb { 
+  background: rgba(77, 184, 204, 0.5); 
+  border-radius: 4px; 
+}
+::-webkit-scrollbar-thumb:hover { background: var(--brand-cyan); }
+
+/* ─── Premium Utility Animations ─────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 16px rgba(77, 184, 204, 0.4); transform: scale(1); }
+  50%      { box-shadow: 0 0 30px rgba(77, 184, 204, 0.7); transform: scale(1.05); }
+}
+
+.animate-fade-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+
+/* Global interactive focus outline */
+*:focus-visible {
+  outline: 2px solid var(--brand-cyan);
+  outline-offset: 4px;
+}

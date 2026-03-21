@@ -1,0 +1,17 @@
+{
+  "name": "Ranjan Nirman Sewa Portal",
+  "short_name": "RNS Portal",
+  "description": "Construction, engineering, and employee portal for Ranjan Nirman Sewa, Nepal.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4db8cc",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

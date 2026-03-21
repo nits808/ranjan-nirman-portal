@@ -1,0 +1,119 @@
+/* AdminDashboard.css Extension for Light Theme Refinements */
+.admin-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-glass-hover);
+}
+
+.logout-btn {
+  padding: 8px 18px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.add-project-card.light-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-glass-hover);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.add-project-card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 16px;
+  color: var(--brand-dark);
+}
+
+.add-project-form {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.add-btn {
+  background: linear-gradient(135deg, var(--brand-cyan), var(--brand-green));
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 24px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(77, 184, 204, 0.2);
+  transition: all 0.2s;
+}
+.add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(77, 184, 204, 0.3);
+}
+
+.delete-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.table-wrapper {
+  background: var(--surface-1);
+  border: 1px solid var(--border-glass-hover);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.project-table.light-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.project-table.light-table th {
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid var(--border-glass-hover);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.project-table.light-table td {
+  padding: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+.project-table.light-table tr:last-child td {
+  border-bottom: none;
+}
+.project-table.light-table tr:hover td {
+  background: rgba(0, 0, 0, 0.015);
+}

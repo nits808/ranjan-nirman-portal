@@ -1,0 +1,51 @@
+.dash-skel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dash-skel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.dash-skel__card {
+  height: 96px;
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  border: 1px solid var(--border-glass-hover);
+}
+
+.dash-skel__block {
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  border: 1px solid var(--border-glass-hover);
+}
+
+.dash-skel__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dash-skel__line {
+  height: 14px;
+  border-radius: 6px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-glass-hover);
+}
+
+.skel-pulse {
+  animation: skel-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes skel-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
