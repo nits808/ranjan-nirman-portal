@@ -40,6 +40,9 @@ function redirectToLoginIfUnauthorized() {
   if (typeof window === 'undefined') return;
   const path = window.location.pathname || '';
   if (path.startsWith('/login')) return;
+  // Only redirect if we have no token — a 401 with a valid token means
+  // it's a backend data/permission issue, not an expired session.
+  if (getAuthToken()) return;
   clearSession();
   window.location.assign('/login');
 }
