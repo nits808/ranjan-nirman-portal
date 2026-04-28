@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Logistic Regression Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      display: flex;
+      width: 650px;
+      height: 320px;
+      border: 2px solid #000;
+      background: #fff;
+    }
+
+    .left, .right {
+      flex: 1;
+      padding: 20px;
+    }
+
+    .left {
+      border-right: 2px solid #000;
+    }
+
+    h3 {
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 8px 12px;
+      margin-right: 10px;
+      border: 1px solid #000;
+      background: #ddd;
+      cursor: pointer;
+    }
+
+    input {
+      display: block;
+      margin-bottom: 10px;
+      padding: 6px;
+      width: 90%;
+      border: 1px solid #000;
+    }
+
+    .output {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <!-- Left Section -->
+  <div class="left">
+    <h3>Results</h3>
+    <button onclick="predict()">Prediction</button>
+    <button onclick="summary()">Summary</button>
+
+    <div class="output" id="output"></div>
+  </div>
+
+  <!-- Right Section -->
+  <div class="right">
+    <label>Name:</label>
+    <input type="text" id="name">
+
+    <label>Score:</label>
+    <input type="number" id="score">
+
+    <button onclick="submitData()">Submit</button>
+  </div>
+
+</div>
+
+<script>
+  let data = [];
+
+  // Store user data
+  function submitData() {
+    const name = document.getElementById("name").value;
+    const score = parseFloat(document.getElementById("score").value);
+
+    if (!name || isNaN(score)) {
+      alert("Enter valid data");
+      return;
+    }
+
+    // Simple labeling: pass(1) if score >= 50
+    const label = score >= 50 ? 1 : 0;
+
+    data.push({ name, score, label });
+    alert("Data added!");
+  }
+
+  // Sigmoid function (core of logistic regression)
+  function sigmoid(z) {
+    return 1 / (1 + Math.exp(-z));
+  }
+
+  // Simple fixed weights (demo model)
+  let w = 0.1;   // weight
+  let b = -5;    // bias
+
+  function predict() {
+    const score = parseFloat(document.getElementById("score").value);
+
+    if (isNaN(score)) {
+      alert("Enter score first");
+      return;
+    }
+
+    const z = w * score + b;
+    const prob = sigmoid(z);
+
+    const result = prob >= 0.5 ? "PASS" : "FAIL";
+
+    document.getElementById("output").innerHTML =
+      `Probability: ${prob.toFixed(3)} <br> Prediction: ${result}`;
+  }
+
+  function summary() {
+    if (data.length === 0) {
+      document.getElementById("output").innerHTML = "No data available";
+      return;
+    }
+
+    let total = data.length;
+    let pass = data.filter(d => d.label === 1).length;
+    let fail = total - pass;
+
+    document.getElementById("output").innerHTML =
+      `Total: ${total} <br> Pass: ${pass} <br> Fail: ${fail}`;
+  }
+</script>
+
+</body>
+</html>

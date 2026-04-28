@@ -47,7 +47,9 @@ function redirectToLoginIfUnauthorized() {
 // ─── Generic fetch helper ──────────────────────────────────
 async function req(path, options = {}) {
   const headers = new Headers(options.headers || undefined);
-  if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+  if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
   const t = getAuthToken();
   if (t) headers.set('Authorization', `Bearer ${t}`);
 
@@ -124,6 +126,11 @@ export const addMaterial = (m) => req('/materials', { method: 'POST', body: JSON
 export const updateMaterial = (id, m) => req(`/materials/${id}`, { method: 'PUT', body: JSON.stringify(m) });
 export const deleteMaterial = (id) => req(`/materials/${id}`, { method: 'DELETE' });
 
+export const fetchAllMaterialRequests = () => req('/materials/requests');
+export const fetchMyMaterialRequests = () => req('/materials/requests/my');
+export const submitMaterialRequest = (mr) => req('/materials/requests', { method: 'POST', body: JSON.stringify(mr) });
+export const updateMaterialRequestStatus = (id, status) => req(`/materials/requests/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+
 // ─── Timesheets ────────────────────────────────────────────
 export const fetchAllTimesheets = () => req('/timesheets');
 export const fetchMyTimesheets = (empId) => req(`/timesheets/employee/${empId}`);
@@ -141,6 +148,7 @@ export const deleteLeave = (id) => req(`/leaves/${id}`, { method: 'DELETE' });
 // ─── Budgets ───────────────────────────────────────────────
 export const fetchBudgets = () => req('/budgets');
 export const fetchBudgetsByProject = (projId) => req(`/budgets/project/${projId}`);
+export const fetchBudgetAlerts = () => req('/budgets/alerts');
 export const createBudget = (b) => req('/budgets', { method: 'POST', body: JSON.stringify(b) });
 export const updateBudget = (id, b) => req(`/budgets/${id}`, { method: 'PUT', body: JSON.stringify(b) });
 export const deleteBudget = (id) => req(`/budgets/${id}`, { method: 'DELETE' });
@@ -154,8 +162,19 @@ export const updateTaskStatus = (id, st) =>
 export const updateTask = (id, task) => req(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify(task) });
 export const deleteTask = (id) => req(`/tasks/${id}`, { method: 'DELETE' });
 
+// ─── Site Photos ───────────────────────────────────────────
+export const uploadPhoto = (taskId, uploaderName, file) => {
+  const fd = new FormData();
+  fd.append('taskId', taskId);
+  fd.append('uploaderName', uploaderName);
+  fd.append('file', file);
+  return req('/photos/upload', { method: 'POST', body: fd });
+};
+export const fetchPhotosForTask = (taskId) => req(`/photos/task/${taskId}`);
+
 // ─── Equipment Tracking ────────────────────────────────────
 export const fetchEquipment = () => req('/equipment');
+export const fetchEquipmentByEmployee = (empId) => req(`/equipment/employee/${empId}`);
 export const addEquipment = (eq) => req('/equipment', { method: 'POST', body: JSON.stringify(eq) });
 export const updateEquipment = (id, eq) => req(`/equipment/${id}`, { method: 'PUT', body: JSON.stringify(eq) });
 export const deleteEquipment = (id) => req(`/equipment/${id}`, { method: 'DELETE' });

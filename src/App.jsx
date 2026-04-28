@@ -17,6 +17,8 @@ function AuthRedirect({ children }) {
   return children;
 }
 
+import ChatbotWidget from './components/ChatbotWidget';
+
 function App() {
   return (
     <ErrorBoundary>
@@ -53,6 +55,7 @@ function App() {
             />
           </Routes>
         </main>
+        <ChatbotWidget />
       </BrowserRouter>
     </ErrorBoundary>
   );

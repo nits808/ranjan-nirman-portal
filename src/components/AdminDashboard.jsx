@@ -9,7 +9,8 @@ import {
   fetchBudgets, createBudget, deleteBudget,
   fetchAllTasks, createTask, deleteTask, updateTask,
   fetchEquipment, addEquipment, updateEquipment, deleteEquipment,
-  fetchDudbcNotices,
+  fetchAllMaterialRequests, updateMaterialRequestStatus,
+  fetchDudbcNotices, fetchBudgetAlerts, fetchPhotosForTask,
   getEmail, getName, clearSession
 } from '../api';
 import { downloadCsv } from '../utils/csv';
@@ -514,11 +515,46 @@ function Budgets({ budgets, projects, onRefresh }) {
   );
 }
 
+/* ─── Photo Gallery Modal ────────────────────────────────── */
+function PhotoGalleryModal({ task, onClose }) {
+  const [photos, setPhotos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    fetchPhotosForTask(task.id).then(res => { setPhotos(res||[]); setLoading(false); }).catch(()=>setLoading(false));
+  }, [task.id]);
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.8)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:999, backdropFilter:'blur(4px)', padding: 20 }}>
+      <div className="animate-fade-up" style={{ background:'var(--surface-0)', borderRadius:'var(--radius-lg)', width:'100%', maxWidth:800, maxHeight:'90vh', overflowY:'auto', border:'1px solid var(--border-glass)' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'20px 24px', borderBottom:'1px solid var(--border-glass-hover)' }}>
+          <div style={{ fontWeight:800, fontSize:'1.2rem', color:'var(--brand-dark)' }}>Photos: {task.taskDescription}</div>
+          <button onClick={onClose} style={{ background:'transparent', border:'none', fontSize:'1.5rem', cursor:'pointer', color:'var(--text-secondary)' }}>&times;</button>
+        </div>
+        <div style={{ padding: 24 }}>
+          {loading ? <p style={{ textAlign:'center', color:'var(--text-muted)' }}>Loading photos...</p> : photos.length === 0 ? <p style={{ textAlign:'center', color:'var(--text-muted)' }}>No photos uploaded for this task.</p> : (
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:16 }}>
+              {photos.map(p => (
+                <div key={p.id} style={{ border:'1px solid var(--border-glass-hover)', borderRadius:'var(--radius-sm)', overflow:'hidden', background:'var(--surface-1)' }}>
+                  <img src={`http://localhost:8080/api/photos/${p.id}`} alt={p.fileName} style={{ width:'100%', height:160, objectFit:'cover', display:'block' }} />
+                  <div style={{ padding:10, fontSize:'0.75rem', color:'var(--text-secondary)' }}>
+                    <div><strong>By:</strong> {p.uploaderName}</div>
+                    <div><strong>Date:</strong> {new Date(p.uploadDate).toLocaleString()}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Tab: Task Board ────────────────────────────────────── */
 function TaskBoard({ tasks, projects, employees, onRefresh }) {
   const { success, error: showErr } = useToast();
   const [form, setForm] = useState({ projectId:'', assignedEmployeeId:'', taskDescription:'', dueDate:'' });
   const [err, setErr] = useState('');
+  const [photoTask, setPhotoTask] = useState(null);
   const handleAdd = async (e) => {
     e.preventDefault(); setErr('');
     const p = projects.find(x => String(x.id) === String(form.projectId));
@@ -532,6 +568,7 @@ function TaskBoard({ tasks, projects, employees, onRefresh }) {
   };
   return (
     <div>
+      {photoTask && <PhotoGalleryModal task={photoTask} onClose={() => setPhotoTask(null)} />}
       <div className="add-project-card light-card">
         <h3>Assign Task</h3><ErrBox msg={err}/>
         <form onSubmit={handleAdd} style={{display:'flex',gap:10,flexWrap:'wrap'}}>
@@ -547,7 +584,10 @@ function TaskBoard({ tasks, projects, employees, onRefresh }) {
           <thead><tr><th>Task</th><th>Project</th><th>Assignee</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead>
           <tbody>{tasks.length===0?<tr><td colSpan={6} style={{textAlign:'center',padding:30}}>No tasks assigned.</td></tr> : tasks.map(t=><tr key={t.id}>
             <td style={{fontWeight:600}}>{t.taskDescription}</td><td>{t.projectName}</td><td>{t.employeeName}</td><td>{t.dueDate}</td><td><Badge status={t.status.replace('_',' ')}/></td>
-            <td><InlineConfirm label="Remove" onConfirm={() => handleDel(t.id)} /></td>
+            <td style={{ display:'flex', gap:6 }}>
+              <button className="add-btn" style={{ padding:'5px 10px', fontSize:'0.75rem', margin:0, background:'var(--surface-3)', color:'var(--text-primary)', border:'1px solid var(--border-glass-hover)' }} onClick={() => setPhotoTask(t)}>🖼️ Photos</button>
+              <InlineConfirm label="Remove" onConfirm={() => handleDel(t.id)} />
+            </td>
           </tr>)}</tbody>
         </table>
       </div>
@@ -556,7 +596,7 @@ function TaskBoard({ tasks, projects, employees, onRefresh }) {
 }
 
 /* ─── Tab: Equipment Fleet ───────────────────────────────── */
-function EquipmentFleet({ equipment, projects, onRefresh }) {
+function EquipmentFleet({ equipment, projects, employees, onRefresh }) {
   const { success, error: showErr } = useToast();
   const [form, setForm] = useState({ name:'', type:'Excavator', currentProjectId:'' });
   const [err, setErr] = useState('');
@@ -565,6 +605,15 @@ function EquipmentFleet({ equipment, projects, onRefresh }) {
     const p = projects.find(x => String(x.id) === String(form.currentProjectId));
     try { await addEquipment({...form, projectName: p?.name||null, currentProjectId: form.currentProjectId ? parseInt(form.currentProjectId) : null}); onRefresh(); setForm({name:'',type:'Excavator',currentProjectId:''}); success('Equipment logged.'); }
     catch { setErr('Failed to add equipment.'); showErr('Could not log equipment.'); }
+  };
+  const handleAssign = async (id, empId) => {
+    const emp = employees.find(e => String(e.id) === String(empId));
+    try { await updateEquipment(id, { assignedEmployeeId: empId ? parseInt(empId) : null, assignedEmployeeName: emp?.name || emp?.email || null }); onRefresh(); success('Assignment updated.'); }
+    catch { showErr('Could not assign equipment.'); }
+  };
+  const handleDate = async (id, date) => {
+    try { await updateEquipment(id, { lastMaintenanceDate: date || null }); onRefresh(); success('Maintenance date updated.'); }
+    catch { showErr('Could not update date.'); }
   };
   const handleStatusChange = async (id, status) => {
     try { await updateEquipment(id, { status }); onRefresh(); success('Status updated.'); }
@@ -587,9 +636,19 @@ function EquipmentFleet({ equipment, projects, onRefresh }) {
       </div>
       <div className="table-wrapper">
         <table className="project-table light-table">
-          <thead><tr><th>Name</th><th>Type</th><th>Location</th><th>Status</th><th>Action</th></tr></thead>
-          <tbody>{equipment.length===0?<tr><td colSpan={5} style={{textAlign:'center',padding:30}}>No equipment logged.</td></tr> : equipment.map(eq=><tr key={eq.id}>
-            <td style={{fontWeight:600}}>{eq.name}</td><td>{eq.type}</td><td style={{color:'var(--text-secondary)'}}>{eq.projectName || 'Warehouse'}</td><td><Badge status={eq.status.replace('_',' ')}/></td>
+          <thead><tr><th>Name</th><th>Type</th><th>Location</th><th>Assignee</th><th>Maintenance</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>{equipment.length===0?<tr><td colSpan={7} style={{textAlign:'center',padding:30}}>No equipment logged.</td></tr> : equipment.map(eq=><tr key={eq.id}>
+            <td style={{fontWeight:600}}>{eq.name}</td><td>{eq.type}</td><td style={{color:'var(--text-secondary)'}}>{eq.projectName || 'Warehouse'}</td>
+            <td>
+              <select style={{padding:'4px 8px', fontSize:'0.75rem', borderRadius:4, border:'1px solid var(--border-glass)'}} value={eq.assignedEmployeeId || ''} onChange={e => handleAssign(eq.id, e.target.value)}>
+                <option value="">Unassigned</option>
+                {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name || emp.email}</option>)}
+              </select>
+            </td>
+            <td>
+              <input type="date" style={{padding:'4px 8px', fontSize:'0.75rem', borderRadius:4, border:'1px solid var(--border-glass)', width: 110}} value={eq.lastMaintenanceDate || ''} onChange={e => handleDate(eq.id, e.target.value)} />
+            </td>
+            <td><Badge status={eq.status.replace('_',' ')}/></td>
             <td style={{ display:'flex', gap:6, alignItems:'center' }}>
               <select style={{padding:'4px 8px', fontSize:'0.75rem', borderRadius:4, border:'1px solid var(--border-glass)'}} value={eq.status} onChange={e => handleStatusChange(eq.id, e.target.value)}>
                 <option value="AVAILABLE">Available</option><option value="IN_USE">In Use</option><option value="MAINTENANCE">Maintenance</option>
@@ -904,8 +963,82 @@ function DudbcUpdates() {
   );
 }
 
+/* ─── Tab: Material Requests (Admin Approval) ─────────────── */
+function MaterialRequests({ requests, onRefresh }) {
+  const { success, error: showErr } = useToast();
+  const [err, setErr] = useState('');
+  const [q, setQ] = useState('');
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return requests;
+    return requests.filter((r) =>
+      `${r.requesterName || ''} ${r.projectName || ''} ${r.materialName || ''} ${r.status || ''}`.toLowerCase().includes(needle)
+    );
+  }, [requests, q]);
+
+  const handle = async (id, status) => {
+    try { await updateMaterialRequestStatus(id, status); onRefresh(); success(`Request ${status.toLowerCase()}`); }
+    catch { setErr('Failed to update.'); showErr('Could not update request.'); }
+  };
+
+  return (
+    <div>
+      <ErrBox msg={err} />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 14, alignItems: 'center', justifyContent: 'space-between' }}>
+        <input
+          style={{ ...inputStyle, flex: '1 1 220px', maxWidth: 420 }}
+          placeholder="Search by employee, project, material, or status…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          aria-label="Search material requests"
+        />
+        <button
+          type="button"
+          className="add-btn"
+          style={{ margin: 0 }}
+          disabled={!requests.length}
+          onClick={() =>
+            downloadCsv(
+              requests,
+              `material-requests-${new Date().toISOString().slice(0, 10)}.csv`,
+              ['requestDate', 'requesterName', 'projectName', 'materialName', 'quantityRequested', 'unit', 'status']
+            )
+          }
+        >
+          Export CSV
+        </button>
+      </div>
+      <div className="table-wrapper">
+        <table className="project-table light-table">
+          <thead><tr><th>Date</th><th>Requester</th><th>Project</th><th>Material</th><th>Qty</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            {filtered.length === 0
+              ? <tr><td colSpan={7} style={{ textAlign:'center', color:'var(--text-muted)', padding:32 }}>{requests.length === 0 ? 'No requests.' : 'No matches.'}</td></tr>
+              : filtered.map(r => (
+                <tr key={r.id}>
+                  <td style={{ color:'var(--text-secondary)', fontSize:'0.85rem' }}>{r.requestDate ? new Date(r.requestDate).toLocaleDateString() : '—'}</td>
+                  <td style={{ fontWeight:600 }}>{r.requesterName || '—'}</td>
+                  <td style={{ color:'var(--text-secondary)' }}>{r.projectName || '—'}</td>
+                  <td style={{ color:'var(--brand-cyan-dark)', fontWeight:700 }}>{r.materialName}</td>
+                  <td>{r.quantityRequested} {r.unit}</td>
+                  <td><Badge status={r.status} /></td>
+                  <td style={{ display:'flex', gap:6 }}>
+                    {r.status === 'PENDING' && <>
+                      <button className="add-btn" style={{ padding:'5px 10px', fontSize:'0.78rem' }} onClick={() => handle(r.id,'APPROVED')}>✓ Approve</button>
+                      <button className="delete-btn" onClick={() => handle(r.id,'REJECTED')}>✗ Reject</button>
+                    </>}
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main AdminDashboard ────────────────────────────────── */
-const TABS = ['Overview','Projects','Employees','Materials','Timesheets','Leave Requests','Budgets','Task Board','Equipment Fleet','DUDBC Updates'];
+const TABS = ['Overview','Projects','Employees','Material Requests','Materials','Timesheets','Leave Requests','Budgets','Task Board','Equipment Fleet','DUDBC Updates'];
 
 export default function AdminDashboard() {
   const navigate   = useNavigate();
@@ -918,19 +1051,21 @@ export default function AdminDashboard() {
   const [tasks, setTasks] = useState([]);
   const [equipment, setEquipment] = useState([]);
   const [leaves, setLeaves]     = useState([]);
+  const [materialRequests, setMaterialRequests] = useState([]);
+  const [alerts, setAlerts]     = useState([]);
   const [loading, setLoading]   = useState(true);
   const [err, setErr]           = useState('');
 
   const load = useCallback(async () => {
     setErr('');
     try {
-      const [p, e, m, t, l, b, tk, eq] = await Promise.all([
+      const [p, e, m, t, l, b, tk, eq, mr, al] = await Promise.all([
         fetchProjects(), fetchEmployees(), fetchMaterials(), fetchAllTimesheets(), fetchAllLeaves(),
-        fetchBudgets(), fetchAllTasks(), fetchEquipment()
+        fetchBudgets(), fetchAllTasks(), fetchEquipment(), fetchAllMaterialRequests(), fetchBudgetAlerts()
       ]);
       setProjects(p||[]); setEmployees(e||[]); setMaterials(m||[]);
       setTimesheets(t||[]); setLeaves(l||[]);
-      setBudgets(b||[]); setTasks(tk||[]); setEquipment(eq||[]);
+      setBudgets(b||[]); setTasks(tk||[]); setEquipment(eq||[]); setMaterialRequests(mr||[]); setAlerts(al||[]);
     } catch { setErr('Could not reach backend. Please start Spring Boot.'); }
     finally { setLoading(false); }
   }, []);
@@ -952,6 +1087,19 @@ export default function AdminDashboard() {
       </header>
 
       {err && <ErrBox msg={err} />}
+      {alerts.length > 0 && (
+        <div className="animate-fade-up" style={{ padding:'16px 24px', background:'rgba(239,68,68,.1)', borderLeft:'4px solid #dc2626', borderRadius:8, marginBottom:24, boxShadow:'var(--shadow-sm)' }}>
+          <div style={{ fontWeight:800, color:'#dc2626', marginBottom:6, fontSize:'1.05rem' }}>⚠️ Budget Utilization Alert</div>
+          <ul style={{ margin:0, paddingLeft:20, color:'#991b1b', fontSize:'0.9rem', lineHeight:1.6 }}>
+            {alerts.map(a => (
+              <li key={a.id}>
+                <strong>{a.projectName} ({a.category})</strong> has used ₹{(a.spentAmount||0).toLocaleString()} out of ₹{(a.allocatedAmount||0).toLocaleString()} 
+                {' '}(<strong style={{ color:'#dc2626' }}>{((a.spentAmount / a.allocatedAmount) * 100).toFixed(1)}%</strong> consumed)
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Tab bar */}
       <div style={{ display:'flex', gap:6, marginBottom:32, overflowX:'auto', paddingBottom:4,
@@ -972,6 +1120,10 @@ export default function AdminDashboard() {
               <span style={{ position:'absolute', top:-6, right:-6, background:'#ef4444', color:'#fff',
                 borderRadius:999, width:18, height:18, fontSize:'0.7rem', display:'flex',
                 alignItems:'center', justifyContent:'center', fontWeight:800, border:'2px solid #fff' }}>{pendingLeaves}</span>}
+            {t==='Material Requests' && materialRequests.filter(r => r.status === 'PENDING').length > 0 &&
+              <span style={{ position:'absolute', top:-6, right:-6, background:'#eab308', color:'#fff',
+                borderRadius:999, width:18, height:18, fontSize:'0.7rem', display:'flex',
+                alignItems:'center', justifyContent:'center', fontWeight:800, border:'2px solid #fff' }}>{materialRequests.filter(r => r.status === 'PENDING').length}</span>}
           </button>
         ))}
       </div>
@@ -983,12 +1135,13 @@ export default function AdminDashboard() {
           {tab === 'Overview'       && <Overview projects={projects} employees={employees} materials={materials} leaves={leaves} />}
           {tab === 'Projects'       && <Projects projects={projects} onRefresh={load} />}
           {tab === 'Employees'      && <Employees employees={employees} onRefresh={load} />}
+          {tab === 'Material Requests' && <MaterialRequests requests={materialRequests} onRefresh={load} />}
           {tab === 'Materials'      && <Materials materials={materials} projects={projects} onRefresh={load} />}
           {tab === 'Timesheets'     && <Timesheets timesheets={timesheets} />}
           {tab === 'Leave Requests' && <Leaves leaves={leaves} onRefresh={load} />}
           {tab === 'Budgets'        && <Budgets budgets={budgets} projects={projects} onRefresh={load} />}
           {tab === 'Task Board'     && <TaskBoard tasks={tasks} projects={projects} employees={employees} onRefresh={load} />}
-          {tab === 'Equipment Fleet'&& <EquipmentFleet equipment={equipment} projects={projects} onRefresh={load} />}
+          {tab === 'Equipment Fleet'&& <EquipmentFleet equipment={equipment} projects={projects} employees={employees} onRefresh={load} />}
           {tab === 'DUDBC Updates'  && <DudbcUpdates />}
         </>
       )}

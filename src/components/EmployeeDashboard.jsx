@@ -6,7 +6,9 @@ import {
   fetchMyLeaves, submitLeave, deleteLeave,
   fetchEmployeeByEmail,
   fetchMyTasks, updateTaskStatus,
-  fetchBudgetsByProject,
+  fetchBudgetsByProject, fetchBudgetAlerts,
+  fetchMyMaterialRequests, submitMaterialRequest,
+  fetchEquipmentByEmployee, uploadPhoto,
   getEmail, getName, getEmployeeId, clearSession,
 } from '../api';
 import { useToast } from '../context/ToastContext';
@@ -129,7 +131,7 @@ function Overview({ profile, projects, timesheets, leaves, tasks }) {
           ].map(([k,v]) => (
             <div key={k} style={{ display:'flex', justifyContent:'space-between', padding:'14px 0', borderBottom:'1px solid rgba(0,0,0,.05)' }}>
               <span style={{ color:'var(--text-secondary)', fontSize:'0.9rem', fontWeight:500 }}>{k}</span>
-              <span style={{ fontWeight:700, color:'var(--text-primary)', fontSize:'0.9rem' }}>{v}</span>
+              <div style={{ fontWeight:700, color:'var(--text-primary)', fontSize:'0.9rem' }}>{v}</div>
             </div>
           ))}
         </div>
@@ -311,7 +313,7 @@ function Leaves({ leaves, empId, empName, onRefresh }) {
 }
 
 // ─── Tab: My Tasks ─────────────────────────────────────────
-function MyTasks({ tasks, onRefresh }) {
+function MyTasks({ tasks, onRefresh, empName }) {
   const { success, error: showErr } = useToast();
   const [err, setErr] = useState('');
   const handleUpdate = async (id, status) => {
@@ -329,14 +331,26 @@ function MyTasks({ tasks, onRefresh }) {
       <div style={{ padding: '20px', fontWeight: 800, borderBottom: '1px solid var(--border-glass-hover)', color: 'var(--brand-dark)' }}>Assigned Tasks</div>
       <ErrBox m={err} />
       <table style={{ width:'100%', borderCollapse:'collapse', textAlign: 'left' }}>
-        <thead><tr>{['Task','Project','Due Date','Status','Action'].map(h => <th key={h} style={{ padding:'16px 20px', fontSize:'0.8rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', color:'var(--text-secondary)', borderBottom:'1px solid var(--border-glass-hover)', background:'rgba(0,0,0,0.02)' }}>{h}</th>)}</tr></thead>
+        <thead><tr>{['Task','Project','Due Date','Status','Photos','Action'].map(h => <th key={h} style={{ padding:'16px 20px', fontSize:'0.8rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', color:'var(--text-secondary)', borderBottom:'1px solid var(--border-glass-hover)', background:'rgba(0,0,0,0.02)' }}>{h}</th>)}</tr></thead>
         <tbody>
-          {tasks.length === 0 ? <tr><td colSpan={5} style={{ textAlign:'center', color:'var(--text-muted)', padding:32 }}>No tasks assigned to you.</td></tr> : tasks.map(t => (
+          {tasks.length === 0 ? <tr><td colSpan={6} style={{ textAlign:'center', color:'var(--text-muted)', padding:32 }}>No tasks assigned to you.</td></tr> : tasks.map(t => (
             <tr key={t.id}>
               <td style={{ padding:'16px 20px', fontWeight:700, color:'var(--text-primary)' }}>{t.taskDescription}</td>
               <td style={{ padding:'16px 20px', color:'var(--text-secondary)' }}>{t.projectName}</td>
               <td style={{ padding:'16px 20px', color: isTaskOverdue(t.dueDate, t.status) ? '#dc2626':'var(--text-secondary)' }}>{t.dueDate}</td>
               <td style={{ padding:'16px 20px' }}><Badge status={t.status.replace('_',' ')} /></td>
+              <td style={{ padding:'16px 20px' }}>
+                <input type="file" id={`file-${t.id}`} style={{ display:'none' }} accept="image/jpeg, image/png" onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    await uploadPhoto(t.id, empName, file);
+                    success('Photo uploaded: ' + t.taskDescription);
+                  } catch { showErr('Could not upload photo.'); }
+                  e.target.value = '';
+                }} />
+                <label htmlFor={`file-${t.id}`} style={{ cursor:'pointer', color:'var(--brand-cyan-dark)', fontWeight:800, fontSize:'0.85rem', display:'flex', alignItems:'center', gap:4 }}>📷 Upload</label>
+              </td>
               <td style={{ padding:'16px 20px' }}>
                 <select style={{ padding:'6px 12px', borderRadius:6, border:'1px solid var(--border-glass)', fontSize:'0.85rem' }} value={t.status} onChange={e => handleUpdate(t.id, e.target.value)}>
                   <option value="TODO">To Do</option>
@@ -401,9 +415,94 @@ function ProjectBudgets({ projects }) {
   );
 }
 
+// ─── Tab: Material Requests ────────────────────────────────
+function MaterialRequests({ requests, projects, onRefresh }) {
+  const { success, error: showErr } = useToast();
+  const [form, setForm] = useState({ materialName:'', quantityRequested:'', unit:'bags', projectId:'' });
+  const [err, setErr] = useState('');
+  const f = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
+
+  const handleSubmit = async (ev) => {
+    ev.preventDefault(); setErr('');
+    try {
+      await submitMaterialRequest({ ...form, quantityRequested: parseFloat(form.quantityRequested)||0, projectId: parseInt(form.projectId)||null });
+      setForm({ materialName:'', quantityRequested:'', unit:'bags', projectId:'' });
+      success('Material request submitted');
+      onRefresh();
+    } catch { setErr('Failed to submit request.'); showErr('Could not submit material request'); }
+  };
+
+  return (
+    <div>
+      <div style={{ padding:'28px', background:'var(--surface-1)', border:'1px solid var(--border-glass-hover)', borderLeft:'4px solid var(--brand-cyan)', borderRadius:'var(--radius-md)', marginBottom:28, boxShadow:'var(--shadow-sm)' }}>
+        <div style={{ fontWeight:800, fontSize:'1.15rem', marginBottom:16, color:'var(--brand-dark)' }}>Request Site Materials</div>
+        <ErrBox m={err} />
+        <form onSubmit={handleSubmit} style={{ display:'flex', flexWrap:'wrap', gap:12 }}>
+          <select style={{...inputStyle, flex: '1 1 200px'}} value={form.projectId} onChange={f('projectId')} required>
+            <option value="">Select Project</option>
+            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <input style={inputStyle} placeholder="Material Name (e.g. Cement)" value={form.materialName} onChange={f('materialName')} required />
+          <input style={inputStyle} type="number" step="0.5" placeholder="Quantity" value={form.quantityRequested} onChange={f('quantityRequested')} required />
+          <select style={inputStyle} value={form.unit} onChange={f('unit')}>
+            {['bags','kg','tonnes','metres','litres','pieces','cubic m'].map(u => <option key={u}>{u}</option>)}
+          </select>
+          <button type="submit" style={{ padding:'12px 28px', background:'linear-gradient(135deg,var(--brand-cyan),var(--brand-cyan-dark))', color:'#fff', border:'none', borderRadius:'var(--radius-sm)', fontWeight:800, cursor:'pointer', boxShadow:'0 4px 12px rgba(77,184,204,0.2)' }}>Submit Request</button>
+        </form>
+      </div>
+
+      <div style={{ background: 'var(--surface-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-glass-hover)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+        <table style={{ width:'100%', borderCollapse:'collapse', textAlign: 'left' }}>
+          <thead>
+            <tr>{['Date','Project','Material','Qty','Status'].map(h => (
+              <th key={h} style={{ padding:'14px 20px', fontSize:'0.8rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', color:'var(--text-secondary)', borderBottom:'1px solid var(--border-glass-hover)', background:'rgba(0,0,0,0.02)' }}>{h}</th>
+            ))}</tr>
+          </thead>
+          <tbody>
+            {requests.length === 0
+              ? <tr><td colSpan={5} style={{ textAlign:'center', color:'var(--text-muted)', padding:32 }}>No material requests submitted.</td></tr>
+              : requests.map(r => (
+                <tr key={r.id}>
+                  <td style={{ padding:'14px 20px', color:'var(--text-secondary)', fontSize:'0.85rem' }}>{r.requestDate ? new Date(r.requestDate).toLocaleDateString() : '—'}</td>
+                  <td style={{ padding:'14px 20px', color:'var(--text-primary)', fontWeight:600 }}>{r.projectName || '—'}</td>
+                  <td style={{ padding:'14px 20px', color:'var(--brand-cyan-dark)', fontWeight:700 }}>{r.materialName}</td>
+                  <td style={{ padding:'14px 20px', color:'var(--text-secondary)' }}>{r.quantityRequested} {r.unit}</td>
+                  <td style={{ padding:'14px 20px' }}><Badge status={r.status} /></td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ─── Tab: My Equipment ─────────────────────────────────────
+function MyEquipment({ equipment }) {
+  return (
+    <div style={{ background: 'var(--surface-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-glass-hover)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+      <div style={{ padding: '20px', fontWeight: 800, borderBottom: '1px solid var(--border-glass-hover)', color: 'var(--brand-dark)' }}>Assigned Equipment</div>
+      <table style={{ width:'100%', borderCollapse:'collapse', textAlign: 'left' }}>
+        <thead><tr>{['Equipment','Type','Location','Maintenance Due','Status'].map(h => <th key={h} style={{ padding:'16px 20px', fontSize:'0.8rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', color:'var(--text-secondary)', borderBottom:'1px solid var(--border-glass-hover)', background:'rgba(0,0,0,0.02)' }}>{h}</th>)}</tr></thead>
+        <tbody>
+          {equipment.length === 0 ? <tr><td colSpan={5} style={{ textAlign:'center', color:'var(--text-muted)', padding:32 }}>No equipment assigned to you.</td></tr> : equipment.map(eq => (
+            <tr key={eq.id}>
+              <td style={{ padding:'16px 20px', fontWeight:700, color:'var(--text-primary)' }}>{eq.name}</td>
+              <td style={{ padding:'16px 20px', color:'var(--text-secondary)' }}>{eq.type}</td>
+              <td style={{ padding:'16px 20px', color:'var(--text-secondary)' }}>{eq.projectName || 'Warehouse'}</td>
+              <td style={{ padding:'16px 20px', color:'var(--brand-yellow-dark)', fontWeight:600 }}>{eq.lastMaintenanceDate || '—'}</td>
+              <td style={{ padding:'16px 20px' }}><Badge status={eq.status.replace('_',' ')} /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ─── Main EmployeeDashboard ────────────────────────────────
 const EMP_TAB_KEY = 'rns-emp-tab';
-const TABS = ['Overview', 'My Tasks', 'My Projects', 'Project Budgets', 'Timesheets', 'Leave Requests'];
+const TABS = ['Overview', 'My Tasks', 'My Projects', 'Project Budgets', 'Material Requests', 'My Equipment', 'Timesheets', 'Leave Requests'];
 
 export default function EmployeeDashboard() {
   const navigate = useNavigate();
@@ -429,6 +528,9 @@ export default function EmployeeDashboard() {
   const [timesheets, setTimesheets] = useState([]);
   const [leaves, setLeaves]       = useState([]);
   const [tasks, setTasks]         = useState([]);
+  const [materialRequests, setMaterialRequests] = useState([]);
+  const [equipment, setEquipment] = useState([]);
+  const [alerts, setAlerts]       = useState([]);
   const [loading, setLoading]     = useState(true);
   const [err, setErr]             = useState('');
 
@@ -438,14 +540,17 @@ export default function EmployeeDashboard() {
   const load = useCallback(async () => {
     setErr('');
     try {
-      const [proj, ts, lv, prof, tks] = await Promise.all([
+      const [proj, ts, lv, prof, tks, matReqs, eqs, al] = await Promise.all([
         fetchProjects(),
         empId ? fetchMyTimesheets(empId) : Promise.resolve([]),
         empId ? fetchMyLeaves(empId)     : Promise.resolve([]),
         fetchEmployeeByEmail(getEmail()),
         empId ? fetchMyTasks(empId)      : Promise.resolve([]),
+        empId ? fetchMyMaterialRequests(): Promise.resolve([]),
+        empId ? fetchEquipmentByEmployee(empId) : Promise.resolve([]),
+        fetchBudgetAlerts(),
       ]);
-      setProjects(proj||[]); setTimesheets(ts||[]); setLeaves(lv||[]); setProfile(prof); setTasks(tks||[]);
+      setProjects(proj||[]); setTimesheets(ts||[]); setLeaves(lv||[]); setProfile(prof); setTasks(tks||[]); setMaterialRequests(matReqs||[]); setEquipment(eqs||[]); setAlerts(al||[]);
     } catch { setErr('Could not reach backend. Please start Spring Boot.'); }
     finally { setLoading(false); }
   }, [empId]);
@@ -475,6 +580,19 @@ export default function EmployeeDashboard() {
         </div>
 
         {err && <ErrBox m={err} />}
+        {alerts.length > 0 && (
+          <div className="animate-fade-up" style={{ padding:'16px 24px', background:'rgba(239,68,68,.1)', borderLeft:'4px solid #dc2626', borderRadius:8, marginBottom:24, boxShadow:'var(--shadow-sm)' }}>
+            <div style={{ fontWeight:800, color:'#dc2626', marginBottom:6, fontSize:'1.05rem' }}>⚠️ Budget Utilization Alert</div>
+            <ul style={{ margin:0, paddingLeft:20, color:'#991b1b', fontSize:'0.9rem', lineHeight:1.6 }}>
+              {alerts.map(a => (
+                <li key={a.id}>
+                  <strong>{a.projectName} ({a.category})</strong> has used ₹{(a.spentAmount||0).toLocaleString()} out of ₹{(a.allocatedAmount||0).toLocaleString()} 
+                  {' '}(<strong style={{ color:'#dc2626' }}>{((a.spentAmount / a.allocatedAmount) * 100).toFixed(1)}%</strong> consumed)
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Tab bar */}
         <div style={{ display:'flex', gap:8, marginBottom:32, overflowX:'auto', paddingBottom:6, borderBottom:'2px solid var(--border-glass-hover)' }}>
@@ -507,9 +625,11 @@ export default function EmployeeDashboard() {
         ) : (
           <>
             {tab === 'Overview'       && <Overview profile={profile} projects={projects} timesheets={timesheets} leaves={leaves} tasks={tasks} />}
-            {tab === 'My Tasks'       && <MyTasks tasks={tasks} onRefresh={load} />}
+            {tab === 'My Tasks'       && <MyTasks tasks={tasks} onRefresh={load} empName={empName} />}
             {tab === 'My Projects'    && <MyProjects projects={projects} />}
             {tab === 'Project Budgets'&& <ProjectBudgets projects={projects} />}
+            {tab === 'Material Requests' && <MaterialRequests requests={materialRequests} projects={projects} onRefresh={load} />}
+            {tab === 'My Equipment'   && <MyEquipment equipment={equipment} />}
             {tab === 'Timesheets'     && <Timesheets timesheets={timesheets} projects={projects} empId={empId} empName={empName} onRefresh={load} />}
             {tab === 'Leave Requests' && <Leaves leaves={leaves} empId={empId} empName={empName} onRefresh={load} />}
           </>
